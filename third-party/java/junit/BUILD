@@ -6,6 +6,7 @@ java_import(
     '//third-party/java/hamcrest:hamcrest',
   ],
   visibility = [
+    '//java/org/infalible/testing/junit:__subpackages__',
     '//javatests/org/infalible:__subpackages__',
   ],
 )

@@ -1,4 +1,4 @@
-package org.infalible.selenium.w3c;
+package org.infalible.testing.junit;
 
 import com.google.common.reflect.ClassPath;
 import org.junit.Test;
