@@ -1,0 +1,11 @@
+directories:
+  java
+  javatests
+
+test_sources:
+  javatests/*
+
+targets:
+  //...
+
+workspace_type: java
