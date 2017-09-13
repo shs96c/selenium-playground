@@ -31,4 +31,25 @@ public class NewSessionPipelineTest {
     }
   }
 
+  @Test
+  public void shouldReturnFirstMatchingProvider() throws IOException {
+    ActiveSession expected = new FakeSession();
+
+    NewSessionPipeline pipeline = NewSessionPipeline.builder()
+        .match((caps, meta) -> null)
+        .match((caps, meta) -> () -> expected)
+        .match((caps, meta) -> () -> {
+          throw new RuntimeException("Never should be called");
+        })
+        .build();
+
+    byte[] rawPayload = TO_JSON.apply(new TreeMap<>()).getBytes(UTF_8);
+    try (InputStream in = new ByteArrayInputStream(rawPayload);
+         NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
+      ActiveSession result = pipeline.newSession(payload);
+
+      assertEquals(expected, result);
+    }
+  }
+
 }
