@@ -31,7 +31,7 @@ public class NewSessionPipeline {
             .map(matcher -> matcher.match(section.getCapabilities(), section.getMetadata()))
             .filter(Objects::nonNull))
         .sorted(comparator)
-          .map(supplier -> {
+        .map(supplier -> {
           try {
             return supplier.get();
           } catch (Exception e) {
