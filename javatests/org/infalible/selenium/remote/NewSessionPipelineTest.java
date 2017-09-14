@@ -1,5 +1,6 @@
 package org.infalible.selenium.remote;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -22,15 +23,9 @@ public class NewSessionPipelineTest {
     NewSessionPipeline pipeline = NewSessionPipeline.builder()
         .match((caps, meta) -> () -> session)
         .build();
+    ActiveSession result = loadSession(pipeline);
 
-
-    byte[] rawPayload = TO_JSON.apply(new TreeMap<>()).getBytes(UTF_8);
-    try (InputStream in = new ByteArrayInputStream(rawPayload);
-         NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
-      ActiveSession result = pipeline.newSession(payload);
-
-      assertEquals(session, result);
-    }
+    assertEquals(session, result);
   }
 
   @Test
@@ -45,13 +40,9 @@ public class NewSessionPipelineTest {
         })
         .build();
 
-    byte[] rawPayload = TO_JSON.apply(new TreeMap<>()).getBytes(UTF_8);
-    try (InputStream in = new ByteArrayInputStream(rawPayload);
-         NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
-      ActiveSession result = pipeline.newSession(payload);
+    ActiveSession result = loadSession(pipeline);
 
-      assertEquals(expected, result);
-    }
+    assertEquals(expected, result);
   }
 
   @Test
@@ -85,13 +76,9 @@ public class NewSessionPipelineTest {
         .match((caps, meta) -> new WeightedSupplier(expected, 5))
         .build();
 
-    byte[] rawPayload = TO_JSON.apply(new TreeMap<>()).getBytes(UTF_8);
-    try (InputStream in = new ByteArrayInputStream(rawPayload);
-         NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
-      ActiveSession result = pipeline.newSession(payload);
+    ActiveSession result = loadSession(pipeline);
 
-      assertEquals(expected, result);
-    }
+    assertEquals(expected, result);
   }
 
   @Test
@@ -122,13 +109,17 @@ public class NewSessionPipelineTest {
         .match((caps, meta) -> unexpectedSupplier)
         .orderedBy(comparator)
         .build();
+    ActiveSession result = loadSession(pipeline);
 
-    byte[] rawPayload = TO_JSON.apply(new TreeMap<>()).getBytes(UTF_8);
+    assertEquals(expected, result);
+  }
+
+  private ActiveSession loadSession(NewSessionPipeline pipeline) throws IOException {
+    byte[] rawPayload = TO_JSON.apply(ImmutableMap.of("capabilities", ImmutableMap.of())).getBytes(UTF_8);
+
     try (InputStream in = new ByteArrayInputStream(rawPayload);
          NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
-      ActiveSession result = pipeline.newSession(payload);
-
-      assertEquals(expected, result);
+      return pipeline.newSession(payload);
     }
   }
 }
