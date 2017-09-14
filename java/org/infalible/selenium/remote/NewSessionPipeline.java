@@ -45,33 +45,9 @@ public class NewSessionPipeline {
 
   public static class Builder {
     private List<CapabilityMatcher> matchers = new LinkedList<>();
-    private Comparator<Supplier<ActiveSession>> comparator;
+    private Comparator<Supplier<ActiveSession>> comparator = new DefaultProviderComparator();
 
     private Builder() {
-      comparator = (lhs, rhs) -> {
-        if (lhs.equals(rhs)) {
-          return 0;
-        }
-
-        // If both sides are themselves Comparable, use that.
-        if (lhs instanceof Comparable && rhs instanceof Comparable) {
-          @SuppressWarnings("unchecked")
-          Comparable<Supplier<ActiveSession>> comparable = (Comparable<Supplier<ActiveSession>>) lhs;
-          return comparable.compareTo(rhs);
-        }
-
-        // If one side is Comparable, prefer that
-        if (lhs instanceof Comparable) {
-          return 1;
-        }
-
-        if (rhs instanceof Comparable) {
-          return -1;
-        }
-
-        // Otherwise, we don't care
-        return 0;
-      };
     }
 
     public NewSessionPipeline build() {
@@ -87,5 +63,7 @@ public class NewSessionPipeline {
       this.comparator = Objects.requireNonNull(comparator, "Comparator must not be null");
       return this;
     }
+
   }
+
 }
