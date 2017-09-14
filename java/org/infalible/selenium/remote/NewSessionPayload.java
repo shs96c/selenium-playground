@@ -152,11 +152,12 @@ public class NewSessionPayload implements Closeable {
       }
     }
 
-    Set<String> alwaysKeys = alwaysMatch.keySet();
+    Set<String> alwaysMatchKeys = alwaysMatch.keySet();
+
     return firstMatch.stream()
         .map(this::coerceToMap)
-        .peek(match -> {
-          Set<String> duplicates = Sets.intersection(alwaysKeys, match.keySet());
+        .peek(map -> {
+          Set<String> duplicates = Sets.intersection(alwaysMatchKeys, map.keySet());
           if (!duplicates.isEmpty()) {
             throw new SessionNotCreatedException("Duplicate keys seen in w3c payload: " + duplicates);
           }

@@ -91,16 +91,25 @@ public class NewSessionPayloadTest {
         "alwaysMatch", ImmutableMap.of("chromeOptions", ImmutableMap.of()))));
   }
 
-  @Test
+  @Test(expected = SessionNotCreatedException.class)
   public void duplicateKeysInTheW3CPayloadAreABadThing() throws IOException {
     asSections(ImmutableMap.of("capabilities", ImmutableMap.of(
-        "alwaysMatch", ImmutableMap.of("browserName", "cheese")),
-        "firstMatch", ImmutableList.of(ImmutableMap.of("browserName", "peas"))));
+        "alwaysMatch", ImmutableMap.of("browserName", "cheese"),
+        "firstMatch", ImmutableList.of(ImmutableMap.of("browserName", "peas")))));
   }
 
   @Test
-  public void shouldOutputOssCapabilitiesFirst() {
+  public void shouldOutputOssCapabilitiesFirst() throws IOException {
+    List<PayloadSection> sections = asSections(ImmutableMap.of(
+        "capabilities", ImmutableMap.of(
+            "alwaysMatch", ImmutableMap.of("browserName", "cheese")),
+        "desiredCapabilities", ImmutableMap.of("browserName", "peas")));
 
+    assertEquals(
+        ImmutableList.of(
+            ImmutableMap.of("browserName", "peas"),
+            ImmutableMap.of("browserName", "cheese")),
+        sections.stream().map(PayloadSection::getCapabilities).collect(ImmutableList.toImmutableList()));
   }
 
   @Test
