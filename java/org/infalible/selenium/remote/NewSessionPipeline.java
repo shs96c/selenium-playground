@@ -3,16 +3,21 @@ package org.infalible.selenium.remote;
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.SessionNotCreatedException;
 
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class NewSessionPipeline {
 
   private final ImmutableList<CapabilityMatcher> matchers;
+  private final Comparator<Supplier<ActiveSession>> comparator;
 
   private NewSessionPipeline(
+      Comparator<Supplier<ActiveSession>> comparator,
       List<CapabilityMatcher> matchers) {
+    this.comparator = comparator;
     this.matchers = ImmutableList.copyOf(matchers);
   }
 
@@ -22,12 +27,11 @@ public class NewSessionPipeline {
 
   public ActiveSession newSession(NewSessionPayload payload) {
     return payload.stream()
-        // Find all the possible providers of sessions
         .flatMap(section -> matchers.stream()
             .map(matcher -> matcher.match(section.getCapabilities(), section.getMetadata()))
             .filter(Objects::nonNull))
-        // And now call each of them in turn. Eventually, we'll end up with a session
-        .map(supplier -> {
+        .sorted(comparator)
+          .map(supplier -> {
           try {
             return supplier.get();
           } catch (Exception e) {
@@ -41,17 +45,46 @@ public class NewSessionPipeline {
 
   public static class Builder {
     private List<CapabilityMatcher> matchers = new LinkedList<>();
+    private Comparator<Supplier<ActiveSession>> comparator;
 
     private Builder() {
-      // Not to be exposed to users
+      comparator = (lhs, rhs) -> {
+        if (lhs.equals(rhs)) {
+          return 0;
+        }
+
+        // If both sides are themselves Comparable, use that.
+        if (lhs instanceof Comparable && rhs instanceof Comparable) {
+          @SuppressWarnings("unchecked")
+          Comparable<Supplier<ActiveSession>> comparable = (Comparable<Supplier<ActiveSession>>) lhs;
+          return comparable.compareTo(rhs);
+        }
+
+        // If one side is Comparable, prefer that
+        if (lhs instanceof Comparable) {
+          return 1;
+        }
+
+        if (rhs instanceof Comparable) {
+          return -1;
+        }
+
+        // Otherwise, we don't care
+        return 0;
+      };
     }
 
     public NewSessionPipeline build() {
-      return new NewSessionPipeline(matchers);
+      return new NewSessionPipeline(comparator, matchers);
     }
 
     public Builder match(CapabilityMatcher matcher) {
       matchers.add(Objects.requireNonNull(matcher, "Matcher must not be null"));
+      return this;
+    }
+
+    public Builder orderedBy(Comparator<Supplier<ActiveSession>> comparator) {
+      this.comparator = Objects.requireNonNull(comparator, "Comparator must not be null");
       return this;
     }
   }
