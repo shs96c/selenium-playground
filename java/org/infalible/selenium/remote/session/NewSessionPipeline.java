@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import com.google.common.collect.ImmutableList;
 import org.openqa.selenium.SessionNotCreatedException;

@@ -1,5 +1,5 @@
 java_library(
-    name = "remote",
+    name = "session",
     srcs = glob(["*.java"]),
     deps = [
         "//java/org/infalible/selenium/remote/json",
@@ -8,6 +8,6 @@ java_library(
         "//third-party/java/selenium",
     ],
     visibility = [
-        "//javatests/org/infalible/selenium/remote:__pkg__",
+        "//javatests/org/infalible/selenium/remote/session:__pkg__",
     ]
 )

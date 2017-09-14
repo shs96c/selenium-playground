@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Comparator;
-import java.util.TreeMap;
 import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;

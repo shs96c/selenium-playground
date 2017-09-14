@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import java.util.Comparator;
 import java.util.function.Supplier;

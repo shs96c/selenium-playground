@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -113,11 +113,6 @@ public class NewSessionPayloadTest {
   }
 
   @Test
-  public void shouldSpoolVeryLargeBlobsToDiskRatherThanUsingAllAvailableMemory() {
-
-  }
-
-  @Test
   public void shouldPreserveMetaData() throws IOException {
     Map<String, Object> rawPayload = ImmutableMap.of(
         "cloud:token", "i like cheese",
@@ -132,9 +127,19 @@ public class NewSessionPayloadTest {
 
   private List<PayloadSection> asSections(Map<String, Object> rawPayload) throws IOException {
     byte[] bytes = Json.TO_JSON.apply(rawPayload).getBytes(UTF_8);
+    List<PayloadSection> fromMemory;
+    List<PayloadSection> presumablyFromDisk;
 
     try (NewSessionPayload payload = new NewSessionPayload(new ByteArrayInputStream(bytes), bytes.length)) {
-      return payload.stream().collect(ImmutableList.toImmutableList());
+      fromMemory = payload.stream().collect(ImmutableList.toImmutableList());
     }
+
+    try (NewSessionPayload payload = new NewSessionPayload(new ByteArrayInputStream(bytes), Integer.MAX_VALUE)) {
+      presumablyFromDisk = payload.stream().collect(ImmutableList.toImmutableList());
+    }
+
+    assertEquals(fromMemory, presumablyFromDisk);
+
+    return fromMemory;
   }
 }

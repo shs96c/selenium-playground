@@ -1,9 +1,9 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import java.util.Map;
 import java.util.Objects;
 
-public class PayloadSection {
+class PayloadSection {
   private final Map<String, Object> capabilities;
   private final Map<String, Object> metadata;
 
@@ -19,5 +19,19 @@ public class PayloadSection {
 
   public Map<String, Object> getMetadata() {
     return metadata;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PayloadSection)) return false;
+    PayloadSection that = (PayloadSection) o;
+    return Objects.equals(getCapabilities(), that.getCapabilities()) &&
+        Objects.equals(getMetadata(), that.getMetadata());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getCapabilities(), getMetadata());
   }
 }

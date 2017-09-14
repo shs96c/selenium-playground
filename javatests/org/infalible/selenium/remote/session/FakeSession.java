@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 public class FakeSession implements ActiveSession {
   private final String name;

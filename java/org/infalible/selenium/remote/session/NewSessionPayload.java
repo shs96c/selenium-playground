@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote;
+package org.infalible.selenium.remote.session;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -22,13 +22,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infalible.selenium.remote.Validators.IS_BOOLEAN;
-import static org.infalible.selenium.remote.Validators.IS_PAGE_LOADING_STRATEGY;
-import static org.infalible.selenium.remote.Validators.IS_PROXY;
-import static org.infalible.selenium.remote.Validators.IS_STRING;
-import static org.infalible.selenium.remote.Validators.IS_TIMEOUT;
-import static org.infalible.selenium.remote.Validators.IS_UNHANDLED_PROMPT_BEHAVIOR;
 import static org.infalible.selenium.remote.json.Json.TO_MAP;
+import static org.infalible.selenium.remote.session.Validators.IS_BOOLEAN;
+import static org.infalible.selenium.remote.session.Validators.IS_PAGE_LOADING_STRATEGY;
+import static org.infalible.selenium.remote.session.Validators.IS_PROXY;
+import static org.infalible.selenium.remote.session.Validators.IS_STRING;
+import static org.infalible.selenium.remote.session.Validators.IS_TIMEOUT;
+import static org.infalible.selenium.remote.session.Validators.IS_UNHANDLED_PROMPT_BEHAVIOR;
 
 public class NewSessionPayload implements Closeable {
 
@@ -64,9 +64,16 @@ public class NewSessionPayload implements Closeable {
       "desiredCapabilities",
       "requiredCapabilities"
   );
+  // Dedicate up to 10% of max ram to holding the payload
+  private static final long THRESHOLD = Runtime.getRuntime().maxMemory() / 10;
+
   private final Map<String, Object> completePayload;
 
   public NewSessionPayload(InputStream in, int estimatedLength) throws IOException {
+    if (estimatedLength > THRESHOLD || Runtime.getRuntime().freeMemory() < estimatedLength) {
+      // TODO: disk-based path here
+    }
+
     byte[] bytes = ByteStreams.toByteArray(in);
     completePayload = TO_MAP.apply(new String(bytes, UTF_8));
 
@@ -184,5 +191,17 @@ public class NewSessionPayload implements Closeable {
 
     @SuppressWarnings("unchecked") Map<String, Object> toReturn = (Map<String, Object>) value;
     return toReturn;
+  }
+
+  private interface PayloadImplementation {
+
+  }
+
+  private class InMemoryPayloadImplementation implements PayloadImplementation {
+
+  }
+
+  private class DiskBasedPayloadImplementation implements PayloadImplementation {
+
   }
 }

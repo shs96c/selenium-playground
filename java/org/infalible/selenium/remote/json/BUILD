@@ -5,7 +5,7 @@ java_library(
         "//third-party/java/gson",  
     ],
     visibility = [
-        "//java/org/infalible/selenium/remote:__subpackages__",
-        "//javatests/org/infalible/selenium/remote:__subpackages__",
+        "//java/org/infalible/selenium/remote/session:__subpackages__",
+        "//javatests/org/infalible/selenium/remote/session:__subpackages__",
     ]
 )
