@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.infalible.selenium.remote.json.Json;
 import org.junit.Test;
+import org.openqa.selenium.SessionNotCreatedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -61,7 +62,7 @@ public class NewSessionPayloadTest {
     List<PayloadSection> sections = asSections(
         ImmutableMap.of(
             "capabilities", ImmutableMap.of(
-                "alwaysMatch", ImmutableMap.of("pageLoadingStrategy", "eager"),
+                "alwaysMatch", ImmutableMap.of("pageLoadStrategy", "eager"),
                 "firstMatch", ImmutableList.of(
                     ImmutableMap.of("browserName", "cheese"),
                     ImmutableMap.of("browserName", "peas")
@@ -69,8 +70,8 @@ public class NewSessionPayloadTest {
 
     assertEquals(
         ImmutableList.of(
-            ImmutableMap.of("browserName", "cheese", "pageLoadingStrategy", "eager"),
-            ImmutableMap.of("browserName", "peas", "pageLoadingStrategy", "eager")),
+            ImmutableMap.of("browserName", "cheese", "pageLoadStrategy", "eager"),
+            ImmutableMap.of("browserName", "peas", "pageLoadStrategy", "eager")),
         sections.stream().map(PayloadSection::getCapabilities).collect(ImmutableList.toImmutableList()));
   }
 
@@ -84,9 +85,17 @@ public class NewSessionPayloadTest {
     assertEquals(ImmutableMap.of(), sections.get(0).getCapabilities());
   }
 
-  @Test
-  public void shouldValidateAllW3CPayloadsEvenIfNotUsed() {
+  @Test(expected = SessionNotCreatedException.class)
+  public void shouldValidateAllW3CPayloadsEvenIfNotUsed() throws IOException {
+    asSections(ImmutableMap.of("capabilities", ImmutableMap.of(
+        "alwaysMatch", ImmutableMap.of("chromeOptions", ImmutableMap.of()))));
+  }
 
+  @Test
+  public void duplicateKeysInTheW3CPayloadAreABadThing() throws IOException {
+    asSections(ImmutableMap.of("capabilities", ImmutableMap.of(
+        "alwaysMatch", ImmutableMap.of("browserName", "cheese")),
+        "firstMatch", ImmutableList.of(ImmutableMap.of("browserName", "peas"))));
   }
 
   @Test

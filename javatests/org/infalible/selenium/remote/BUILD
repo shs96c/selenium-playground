@@ -8,5 +8,6 @@ java_test(
     '//third-party/java/gson',
     '//third-party/java/guava',
     '//third-party/java/junit',
+    '//third-party/java/selenium',
   ],
 )
