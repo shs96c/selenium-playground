@@ -2,7 +2,7 @@ java_library(
     name = "session",
     srcs = glob(["*.java"]),
     deps = [
-        "//java/org/infalible/selenium/remote/json",
+        "//java/org/infalible/selenium/json",
         "//third-party/java/gson",
         "//third-party/java/guava",
         "//third-party/java/selenium",

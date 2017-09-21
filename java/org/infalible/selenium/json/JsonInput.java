@@ -1,4 +1,4 @@
-package org.infalible.selenium.remote.json;
+package org.infalible.selenium.json;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;

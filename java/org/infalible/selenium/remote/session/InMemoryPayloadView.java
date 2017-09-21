@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.infalible.selenium.remote.json.Json.TO_MAP;
+import static org.infalible.selenium.json.Json.TO_MAP;
 
 class InMemoryPayloadView extends PayloadView {
   private final Map<String, Object> completePayload;

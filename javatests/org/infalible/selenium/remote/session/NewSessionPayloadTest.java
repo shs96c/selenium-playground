@@ -2,11 +2,10 @@ package org.infalible.selenium.remote.session;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.infalible.selenium.remote.json.Json;
+import org.infalible.selenium.json.Json;
 import org.junit.Test;
 import org.openqa.selenium.SessionNotCreatedException;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
@@ -21,9 +20,8 @@ public class NewSessionPayloadTest {
 
   @Test
   public void shouldExportTheJsonWireProtocolPayloadIfOnlyItemPresent() throws IOException {
-    Map<String, Object> rawPayload = ImmutableMap.of(
-        "desiredCapabilities", ImmutableMap.of(
-            "browserName", "cheese"));
+    Map<String, Object> rawPayload =
+        ImmutableMap.of("desiredCapabilities", ImmutableMap.of("browserName", "cheese"));
 
     List<PayloadSection> sections = asSections(rawPayload);
 
@@ -34,10 +32,11 @@ public class NewSessionPayloadTest {
 
   @Test
   public void shouldExportAlwaysMatchPayloadIfOnlyItemPresent() throws IOException {
-    List<PayloadSection> sections = asSections(
-        ImmutableMap.of(
-            "capabilities",
-            ImmutableMap.of("alwaysMatch", ImmutableMap.of("browserName", "cheese"))));
+    List<PayloadSection> sections =
+        asSections(
+            ImmutableMap.of(
+                "capabilities",
+                ImmutableMap.of("alwaysMatch", ImmutableMap.of("browserName", "cheese"))));
 
     assertEquals(1, sections.size());
     assertEquals(ImmutableMap.of("browserName", "cheese"), sections.get(0).getCapabilities());
@@ -45,13 +44,15 @@ public class NewSessionPayloadTest {
 
   @Test
   public void shouldExportFirstMatchPayloadIfOnlyItemPresent() throws IOException {
-    List<PayloadSection> sections = asSections(
-        ImmutableMap.of(
-            "capabilities", ImmutableMap.of(
-                "firstMatch", ImmutableList.of(
-                    ImmutableMap.of("browserName", "cheese"),
-                    ImmutableMap.of("browserName", "peas")
-                ))));
+    List<PayloadSection> sections =
+        asSections(
+            ImmutableMap.of(
+                "capabilities",
+                ImmutableMap.of(
+                    "firstMatch",
+                    ImmutableList.of(
+                        ImmutableMap.of("browserName", "cheese"),
+                        ImmutableMap.of("browserName", "peas")))));
 
     assertEquals(2, sections.size());
     assertEquals(ImmutableMap.of("browserName", "cheese"), sections.get(0).getCapabilities());
@@ -60,20 +61,25 @@ public class NewSessionPayloadTest {
 
   @Test
   public void shouldMergeW3CPayloads() throws IOException {
-    List<PayloadSection> sections = asSections(
-        ImmutableMap.of(
-            "capabilities", ImmutableMap.of(
-                "alwaysMatch", ImmutableMap.of("pageLoadStrategy", "eager"),
-                "firstMatch", ImmutableList.of(
-                    ImmutableMap.of("browserName", "cheese"),
-                    ImmutableMap.of("browserName", "peas")
-                ))));
+    List<PayloadSection> sections =
+        asSections(
+            ImmutableMap.of(
+                "capabilities",
+                ImmutableMap.of(
+                    "alwaysMatch", ImmutableMap.of("pageLoadStrategy", "eager"),
+                    "firstMatch",
+                        ImmutableList.of(
+                            ImmutableMap.of("browserName", "cheese"),
+                            ImmutableMap.of("browserName", "peas")))));
 
     assertEquals(
         ImmutableList.of(
             ImmutableMap.of("browserName", "cheese", "pageLoadStrategy", "eager"),
             ImmutableMap.of("browserName", "peas", "pageLoadStrategy", "eager")),
-        sections.stream().map(PayloadSection::getCapabilities).collect(ImmutableList.toImmutableList()));
+        sections
+            .stream()
+            .map(PayloadSection::getCapabilities)
+            .collect(ImmutableList.toImmutableList()));
   }
 
   @Test
@@ -88,38 +94,47 @@ public class NewSessionPayloadTest {
 
   @Test(expected = SessionNotCreatedException.class)
   public void shouldValidateAllW3CPayloadsEvenIfNotUsed() throws IOException {
-    asSections(ImmutableMap.of("capabilities", ImmutableMap.of(
-        "alwaysMatch", ImmutableMap.of("chromeOptions", ImmutableMap.of()))));
+    asSections(
+        ImmutableMap.of(
+            "capabilities",
+            ImmutableMap.of("alwaysMatch", ImmutableMap.of("chromeOptions", ImmutableMap.of()))));
   }
 
   @Test(expected = SessionNotCreatedException.class)
   public void duplicateKeysInTheW3CPayloadAreABadThing() throws IOException {
-    asSections(ImmutableMap.of("capabilities", ImmutableMap.of(
-        "alwaysMatch", ImmutableMap.of("browserName", "cheese"),
-        "firstMatch", ImmutableList.of(ImmutableMap.of("browserName", "peas")))));
+    asSections(
+        ImmutableMap.of(
+            "capabilities",
+            ImmutableMap.of(
+                "alwaysMatch", ImmutableMap.of("browserName", "cheese"),
+                "firstMatch", ImmutableList.of(ImmutableMap.of("browserName", "peas")))));
   }
 
   @Test
   public void shouldOutputOssCapabilitiesFirst() throws IOException {
-    List<PayloadSection> sections = asSections(ImmutableMap.of(
-        "capabilities", ImmutableMap.of(
-            "alwaysMatch", ImmutableMap.of("browserName", "cheese")),
-        "desiredCapabilities", ImmutableMap.of("browserName", "peas")));
+    List<PayloadSection> sections =
+        asSections(
+            ImmutableMap.of(
+                "capabilities",
+                    ImmutableMap.of("alwaysMatch", ImmutableMap.of("browserName", "cheese")),
+                "desiredCapabilities", ImmutableMap.of("browserName", "peas")));
 
     assertEquals(
         ImmutableList.of(
-            ImmutableMap.of("browserName", "peas"),
-            ImmutableMap.of("browserName", "cheese")),
-        sections.stream().map(PayloadSection::getCapabilities).collect(ImmutableList.toImmutableList()));
+            ImmutableMap.of("browserName", "peas"), ImmutableMap.of("browserName", "cheese")),
+        sections
+            .stream()
+            .map(PayloadSection::getCapabilities)
+            .collect(ImmutableList.toImmutableList()));
   }
 
   @Test
   public void shouldPreserveMetaData() throws IOException {
-    Map<String, Object> rawPayload = ImmutableMap.of(
-        "cloud:token", "i like cheese",
-        "desiredCapabilities", ImmutableMap.of());
+    Map<String, Object> rawPayload =
+        ImmutableMap.of("cloud:token", "i like cheese", "desiredCapabilities", ImmutableMap.of());
 
-    asSections(rawPayload).stream()
+    asSections(rawPayload)
+        .stream()
         .map(PayloadSection::getMetadata)
         .filter(meta -> !"i like cheese".equals(meta.get("cloud:token")))
         .findAny()
@@ -132,12 +147,12 @@ public class NewSessionPayloadTest {
     List<PayloadSection> fromMemory;
     List<PayloadSection> presumablyFromDisk;
 
-    try (
-        NewSessionPayload payload = new NewSessionPayload(new StringReader(json), bytes.length)) {
+    try (NewSessionPayload payload = new NewSessionPayload(new StringReader(json), bytes.length)) {
       fromMemory = payload.stream().collect(ImmutableList.toImmutableList());
     }
 
-    try (NewSessionPayload payload = new NewSessionPayload(new StringReader(json), Integer.MAX_VALUE)) {
+    try (NewSessionPayload payload =
+        new NewSessionPayload(new StringReader(json), Integer.MAX_VALUE)) {
       presumablyFromDisk = payload.stream().collect(ImmutableList.toImmutableList());
     }
 

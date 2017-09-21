@@ -3,9 +3,9 @@ package org.infalible.selenium.remote.session;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
-import org.infalible.selenium.remote.json.Json;
-import org.infalible.selenium.remote.json.JsonInput;
-import org.infalible.selenium.remote.json.JsonOutput;
+import org.infalible.selenium.json.Json;
+import org.infalible.selenium.json.JsonInput;
+import org.infalible.selenium.json.JsonOutput;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.io.FileHandler;
 
@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infalible.selenium.remote.json.Json.MAP_TYPE;
-import static org.infalible.selenium.remote.json.Json.OBJECT_TYPE;
+import static org.infalible.selenium.json.Json.MAP_TYPE;
+import static org.infalible.selenium.json.Json.OBJECT_TYPE;
 
 class DiskBackedPayloadView extends PayloadView implements Closeable {
 
