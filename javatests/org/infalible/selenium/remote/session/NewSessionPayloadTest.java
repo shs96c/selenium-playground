@@ -8,6 +8,7 @@ import org.openqa.selenium.SessionNotCreatedException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
@@ -126,15 +127,17 @@ public class NewSessionPayloadTest {
   }
 
   private List<PayloadSection> asSections(Map<String, Object> rawPayload) throws IOException {
-    byte[] bytes = Json.TO_JSON.apply(rawPayload).getBytes(UTF_8);
+    String json = Json.TO_JSON.apply(rawPayload);
+    byte[] bytes = json.getBytes(UTF_8);
     List<PayloadSection> fromMemory;
     List<PayloadSection> presumablyFromDisk;
 
-    try (NewSessionPayload payload = new NewSessionPayload(new ByteArrayInputStream(bytes), bytes.length)) {
+    try (
+        NewSessionPayload payload = new NewSessionPayload(new StringReader(json), bytes.length)) {
       fromMemory = payload.stream().collect(ImmutableList.toImmutableList());
     }
 
-    try (NewSessionPayload payload = new NewSessionPayload(new ByteArrayInputStream(bytes), Integer.MAX_VALUE)) {
+    try (NewSessionPayload payload = new NewSessionPayload(new StringReader(json), Integer.MAX_VALUE)) {
       presumablyFromDisk = payload.stream().collect(ImmutableList.toImmutableList());
     }
 

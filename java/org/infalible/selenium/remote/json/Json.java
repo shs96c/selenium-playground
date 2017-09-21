@@ -11,6 +11,7 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,13 +21,13 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 public class Json {
-  private final static Gson GSON = new GsonBuilder()
+  public final static Gson GSON = new GsonBuilder()
       .registerTypeAdapterFactory(ListAdapter.FACTORY)
       .registerTypeAdapterFactory(MapAdapter.FACTORY)
       .setLenient()
       .serializeNulls()
       .create();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
+  public static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
 
   public final static Function<Object, String> TO_JSON = GSON::toJson;
 

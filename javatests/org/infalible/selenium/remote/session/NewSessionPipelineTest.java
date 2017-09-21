@@ -3,9 +3,9 @@ package org.infalible.selenium.remote.session;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Comparator;
 import java.util.function.Supplier;
 
@@ -114,9 +114,10 @@ public class NewSessionPipelineTest {
   }
 
   private ActiveSession loadSession(NewSessionPipeline pipeline) throws IOException {
-    byte[] rawPayload = TO_JSON.apply(ImmutableMap.of("capabilities", ImmutableMap.of())).getBytes(UTF_8);
+    String json = TO_JSON.apply(ImmutableMap.of("capabilities", ImmutableMap.of()));
+    byte[] rawPayload = json.getBytes(UTF_8);
 
-    try (InputStream in = new ByteArrayInputStream(rawPayload);
+    try (Reader in = new StringReader(json);
          NewSessionPayload payload = new NewSessionPayload(in, rawPayload.length)) {
       return pipeline.newSession(payload);
     }

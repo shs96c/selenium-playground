@@ -1,18 +1,15 @@
 package org.infalible.selenium.remote.session;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 import org.openqa.selenium.SessionNotCreatedException;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
+import java.io.Reader;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -21,8 +18,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.infalible.selenium.remote.json.Json.TO_MAP;
 import static org.infalible.selenium.remote.session.Validators.IS_BOOLEAN;
 import static org.infalible.selenium.remote.session.Validators.IS_PAGE_LOADING_STRATEGY;
 import static org.infalible.selenium.remote.session.Validators.IS_PROXY;
@@ -67,25 +62,20 @@ public class NewSessionPayload implements Closeable {
   // Dedicate up to 10% of max ram to holding the payload
   private static final long THRESHOLD = Runtime.getRuntime().maxMemory() / 10;
 
-  private final Map<String, Object> completePayload;
+  private final PayloadView view;
 
-  public NewSessionPayload(InputStream in, int estimatedLength) throws IOException {
+  public NewSessionPayload(Reader in, int estimatedLength) throws IOException {
     if (estimatedLength > THRESHOLD || Runtime.getRuntime().freeMemory() < estimatedLength) {
-      // TODO: disk-based path here
+      this.view = new DiskBackedPayloadView(in);
+    } else {
+      this.view = new InMemoryPayloadView(in);
     }
 
-    byte[] bytes = ByteStreams.toByteArray(in);
-    completePayload = TO_MAP.apply(new String(bytes, UTF_8));
-
-    validate(completePayload.get("capabilities"));
+    validate(this.view);
   }
 
-  private void validate(Object capabilities) {
-    if (capabilities == null) {
-      return;
-    }
-
-    extractW3CCapabilities(capabilities).forEach(
+  private void validate(PayloadView view) {
+    extractW3CCapabilities(view).forEach(
             map -> {
               for (Map.Entry<String, Object> entry : map.entrySet()) {
                 if (!ACCEPTED_W3C_PATTERNS.test(entry.getKey())) {
@@ -105,64 +95,43 @@ public class NewSessionPayload implements Closeable {
 
   @Override
   public void close() throws IOException {
-    // Do nothing
+    if (view instanceof Closeable) {
+      ((Closeable) view).close();
+    }
   }
 
   public Stream<PayloadSection> stream() {
     // Pick out the pieces
-    ImmutableSortedMap<String, Object> metadata = completePayload.entrySet().stream()
-        .filter(entry -> Objects.nonNull(entry.getKey()))
+    ImmutableSortedMap<String, Object> metadata = view.getKeys()
+        .filter(key -> !DEFINITELY_NOT_METADATA.contains(key))
+        .map(view::getMetadata)
         .filter(entry -> Objects.nonNull(entry.getValue()))
-        .filter(entry -> !DEFINITELY_NOT_METADATA.contains(entry.getKey()))
-        .collect(ImmutableSortedMap.toImmutableSortedMap(Ordering.natural(), Map.Entry::getKey, Map.Entry::getValue));
+        .collect(ImmutableSortedMap.toImmutableSortedMap(
+            Ordering.natural(),
+            PayloadView.Entry::getKey,
+            PayloadView.Entry::getValue));
 
     return Stream.concat(
-        extractOssCapabilities(completePayload.get("desiredCapabilities")),
-        extractW3CCapabilities(completePayload.get("capabilities")))
+        extractOssCapabilities(view),
+        extractW3CCapabilities(view))
+        .filter(Objects::nonNull)
         .map(caps -> new PayloadSection(caps, metadata));
   }
 
 
-  private Stream<Map<String, Object>> extractOssCapabilities(Object raw) {
-    if (raw == null) {
-      return Stream.of();
-    }
-
-    return Stream.of(coerceToMap(raw));
+  private Stream<Map<String, Object>> extractOssCapabilities(PayloadView view) {
+    return Stream.of(view.getDesiredCapabilities());
   }
 
-  private Stream<Map<String, Object>> extractW3CCapabilities(Object raw) {
-    if (raw == null) {
+  private Stream<Map<String, Object>> extractW3CCapabilities(PayloadView view) {
+    if (!view.containsKey("capabilities")) {
       return Stream.of();
     }
 
-    Map<String, Object> capabilities = coerceToMap(raw);
-    // The spec says it's legit to just have the key with no values in it.
-    if (!capabilities.containsKey("firstMatch") && !capabilities.containsKey("alwaysMatch")) {
-      return Stream.of(ImmutableMap.of());
-    }
-
-    Object value = capabilities.get("alwaysMatch");
-    Map<String, Object> alwaysMatch = value == null ? ImmutableMap.of() : coerceToMap(value);
-
-    value = capabilities.get("firstMatch");
-    List<?> firstMatch;
-    if (value == null) {
-      firstMatch = ImmutableList.of(ImmutableMap.of());
-    } else {
-      if (!(value instanceof List)) {
-        throw new SessionNotCreatedException("First match capabilities were not a list: " + value);
-      }
-      firstMatch = (List<?>) value;
-      if (firstMatch.isEmpty()) {
-        firstMatch = ImmutableList.of(ImmutableMap.of());
-      }
-    }
-
+    Map<String, Object> alwaysMatch = view.getAlwaysMatch();
     Set<String> alwaysMatchKeys = alwaysMatch.keySet();
 
-    return firstMatch.stream()
-        .map(this::coerceToMap)
+    return view.getFirstMatches()
         .peek(map -> {
           Set<String> duplicates = Sets.intersection(alwaysMatchKeys, map.keySet());
           if (!duplicates.isEmpty()) {
@@ -175,33 +144,5 @@ public class NewSessionPayload implements Closeable {
           toReturn.putAll(map);
           return toReturn;
         });
-  }
-
-  private Map<String, Object> coerceToMap(Object value) {
-    if (!(value instanceof Map)) {
-      throw new SessionNotCreatedException("Expected value to be a map: " + value);
-    }
-
-    // Validate that all keys are strings.
-    ((Map<?, ?>) value).keySet().forEach(key -> {
-      if (!(key instanceof String)) {
-        throw new SessionNotCreatedException("Key was not a string: " + key);
-      }
-    });
-
-    @SuppressWarnings("unchecked") Map<String, Object> toReturn = (Map<String, Object>) value;
-    return toReturn;
-  }
-
-  private interface PayloadImplementation {
-
-  }
-
-  private class InMemoryPayloadImplementation implements PayloadImplementation {
-
-  }
-
-  private class DiskBasedPayloadImplementation implements PayloadImplementation {
-
   }
 }
