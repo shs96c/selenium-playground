@@ -120,7 +120,7 @@ public class NewSessionPayload implements Closeable {
 
 
   private Stream<Map<String, Object>> extractOssCapabilities(PayloadView view) {
-    return Stream.of(view.getDesiredCapabilities());
+    return new JwpToW3CCapabilitiesAdapter().apply(view.getDesiredCapabilities());
   }
 
   private Stream<Map<String, Object>> extractW3CCapabilities(PayloadView view) {

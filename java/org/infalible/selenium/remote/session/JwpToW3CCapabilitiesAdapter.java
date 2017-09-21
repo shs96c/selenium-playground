@@ -40,6 +40,10 @@ public class JwpToW3CCapabilitiesAdapter implements Function<Map<String, Object>
   }
 
   public Stream<Map<String,Object>> apply(Map<String, Object> caps) {
+    if (caps == null) {
+      return Stream.of();
+    }
+
     Set<String> usedKeys = new HashSet<>();
 
     // We're going to do this in two passes. The first will let us populate usedKeys, which we can then use to generate
