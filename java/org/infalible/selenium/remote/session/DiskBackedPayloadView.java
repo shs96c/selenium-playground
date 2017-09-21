@@ -3,9 +3,9 @@ package org.infalible.selenium.remote.session;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import org.infalible.selenium.remote.json.Json;
+import org.infalible.selenium.remote.json.JsonInput;
+import org.infalible.selenium.remote.json.JsonOutput;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.io.FileHandler;
 
@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.infalible.selenium.remote.json.Json.MAP_TYPE;
+import static org.infalible.selenium.remote.json.Json.OBJECT_TYPE;
 
 class DiskBackedPayloadView extends PayloadView implements Closeable {
 
@@ -45,7 +47,7 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
 
     int metadataCount = 0;
 
-    try (JsonReader jsonReader = Json.GSON.newJsonReader(in)) {
+    try (JsonInput jsonReader = Json.newInput(in)) {
       jsonReader.beginObject();
 
       while (jsonReader.hasNext()) {
@@ -55,8 +57,8 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
         switch (name) {
           case "desiredCapabilities":
             try (Writer writer = Files.newBufferedWriter(desiredCapabilities, UTF_8);
-                 JsonWriter out = Json.GSON.newJsonWriter(writer)) {
-              Json.GSON.toJson(Json.GSON.fromJson(jsonReader, Json.MAP_TYPE), Json.MAP_TYPE, out);
+                  JsonOutput out = Json.newOutput(writer)) {
+              out.write(jsonReader, MAP_TYPE);
             }
             break;
 
@@ -68,8 +70,8 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
                 case "alwaysMatch":
                   Files.createDirectories(alwaysMatch.getParent());
                   try (Writer writer = Files.newBufferedWriter(alwaysMatch, UTF_8);
-                       JsonWriter out = Json.GSON.newJsonWriter(writer)) {
-                    Json.GSON.toJson(Json.GSON.fromJson(jsonReader, Json.MAP_TYPE), Json.MAP_TYPE, out);
+                       JsonOutput out = Json.newOutput(writer)) {
+                    out.write(jsonReader, MAP_TYPE);
                   }
                   break;
 
@@ -82,8 +84,8 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
                     Files.createDirectories(match.getParent());
                     count++;
                     try (Writer writer = Files.newBufferedWriter(match, UTF_8);
-                         JsonWriter out = Json.GSON.newJsonWriter(writer)) {
-                      Json.GSON.toJson(Json.GSON.fromJson(jsonReader, Json.MAP_TYPE), Json.MAP_TYPE, out);
+                         JsonOutput out = Json.newOutput(writer)) {
+                      out.write(jsonReader, MAP_TYPE);
                     }
                     firstMatches.add(match);
                   }
@@ -103,8 +105,8 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
             Files.createDirectories(path.getParent());
             metadataCount++;
             try (Writer writer = Files.newBufferedWriter(path, UTF_8);
-                 JsonWriter out = Json.GSON.newJsonWriter(writer)) {
-              Json.GSON.toJson(Json.GSON.fromJson(jsonReader, Object.class), Object.class, out);
+                 JsonOutput out = Json.newOutput(writer)) {
+              out.write(jsonReader, OBJECT_TYPE);
             }
             metadata.put(name, path);
             break;
@@ -130,9 +132,9 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
       return null;
     }
 
-    try (BufferedReader reader = Files.newBufferedReader(path, UTF_8)) {
-      Object value = Json.GSON.fromJson(reader, Object.class);
-      return new Entry(key, value);
+    try (BufferedReader reader = Files.newBufferedReader(path, UTF_8);
+         JsonInput input = Json.newInput(reader)) {
+      return new Entry(key, input.read(OBJECT_TYPE));
     } catch (IOException e) {
       throw new WebDriverException(e);
     }
@@ -143,8 +145,9 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
     if (!Files.exists(alwaysMatch)) {
       return ImmutableMap.of();
     }
-    try (Reader reader = Files.newBufferedReader(alwaysMatch, UTF_8)) {
-      return Json.GSON.fromJson(reader, Json.MAP_TYPE);
+    try (Reader reader = Files.newBufferedReader(alwaysMatch, UTF_8);
+        JsonInput input = Json.newInput(reader)) {
+      return input.read(MAP_TYPE);
     } catch (IOException e) {
       throw new WebDriverException(e);
     }
@@ -155,11 +158,12 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
     if (!firstMatchesRead.get()) {
       return Stream.of(ImmutableMap.of());
     }
-    
+
     return firstMatch.stream()
         .map(path -> {
-          try (Reader reader = Files.newBufferedReader(path, UTF_8)) {
-            return Json.GSON.fromJson(reader, Json.MAP_TYPE);
+          try (Reader reader = Files.newBufferedReader(path, UTF_8);
+              JsonInput input = Json.newInput(reader)) {
+            return input.read(MAP_TYPE);
           } catch (IOException e) {
             throw new WebDriverException(e);
           }
@@ -171,11 +175,13 @@ class DiskBackedPayloadView extends PayloadView implements Closeable {
     if (!Files.exists(desiredCapabilities)) {
       return null;
     }
-    try (Reader reader = Files.newBufferedReader(desiredCapabilities, UTF_8)) {
-      return Json.GSON.fromJson(reader, Json.MAP_TYPE);
+    try (Reader reader = Files.newBufferedReader(desiredCapabilities, UTF_8);
+         JsonInput input = Json.newInput(reader)) {
+      return input.read(MAP_TYPE);
     } catch (IOException e) {
       throw new WebDriverException(e);
     }
+
   }
 
   @Override

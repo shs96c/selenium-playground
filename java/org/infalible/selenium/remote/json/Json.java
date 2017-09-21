@@ -12,6 +12,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
 import java.util.List;
@@ -21,13 +22,14 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 public class Json {
-  public final static Gson GSON = new GsonBuilder()
+  private final static Gson GSON = new GsonBuilder()
       .registerTypeAdapterFactory(ListAdapter.FACTORY)
       .registerTypeAdapterFactory(MapAdapter.FACTORY)
       .setLenient()
       .serializeNulls()
       .create();
   public static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
+  public static final Type OBJECT_TYPE = new TypeToken<Object>() {}.getType();
 
   public final static Function<Object, String> TO_JSON = GSON::toJson;
 
@@ -52,6 +54,14 @@ public class Json {
       default:
         throw new JsonParseException("Unexpected type: " + in.peek());
     }
+  }
+
+  public static JsonInput newInput(Reader from) throws IOException {
+    return new JsonInput(GSON, GSON.newJsonReader(from));
+  }
+
+  public static JsonOutput newOutput(Writer to) throws IOException {
+    return new JsonOutput(GSON, GSON.newJsonWriter(to));
   }
 
   private static class MapAdapter extends TypeAdapter<Map<?, ?>> {
