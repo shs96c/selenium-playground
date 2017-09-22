@@ -2,6 +2,8 @@ java_import(
   name = 'selenium',
   jars = [
     'selenium-api-3.5.3.jar',
+    'selenium-chrome-driver-3.5.3.jar',
+    'selenium-firefox-driver-3.5.3.jar',
     'selenium-remote-driver-3.5.3.jar',
   ],
   deps = [
