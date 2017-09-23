@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 import org.openqa.selenium.SessionNotCreatedException;
+import org.openqa.selenium.remote.Dialect;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -91,6 +92,17 @@ public class NewSessionPayload implements Closeable {
                 }
               }
             });
+  }
+
+  public Set<Dialect> getDownstreamDialects() {
+    ImmutableSet.Builder<Dialect> dialects = ImmutableSet.builder();
+    if (view.containsKey("capabilities")) {
+      dialects.add(Dialect.W3C);
+    }
+    if (view.containsKey("desiredCapabilities")) {
+      dialects.add(Dialect.OSS);
+    }
+    return dialects.build();
   }
 
   @Override
