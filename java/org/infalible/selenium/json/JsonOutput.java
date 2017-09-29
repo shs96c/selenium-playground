@@ -21,8 +21,38 @@ public class JsonOutput implements Closeable {
     jsonWriter.close();
   }
 
-  public void write(JsonInput input, Type type) {
+  public void write(JsonInput input, Type type) throws IOException {
     Object read = input.read(type);
     gson.toJson(read, type, jsonWriter);
+  }
+
+  public JsonOutput write(Object input, Type type) throws IOException {
+    gson.toJson(input, type, jsonWriter);
+    return this;
+  }
+
+  public JsonOutput beginObject() throws IOException {
+    jsonWriter.beginObject();
+    return this;
+  }
+
+  public JsonOutput endObject() throws IOException {
+    jsonWriter.endObject();
+    return this;
+  }
+
+  public JsonOutput name(String name) throws IOException {
+    jsonWriter.name(name);
+    return this;
+  }
+
+  public JsonOutput beginArray() throws IOException {
+    jsonWriter.beginArray();
+    return this;
+  }
+
+  public JsonOutput endArray() throws IOException {
+    jsonWriter.endArray();
+    return this;
   }
 }

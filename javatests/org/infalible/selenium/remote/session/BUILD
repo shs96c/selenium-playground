@@ -11,3 +11,16 @@ java_test(
     '//third-party/java/selenium',
   ],
 )
+
+java_binary(
+  name = 'spike',
+  main_class = 'org.infalible.selenium.remote.session.Spike',
+  srcs = [
+    "Spike.java",
+  ],
+  deps = [
+    '//java/org/infalible/selenium/json',
+    '//java/org/infalible/selenium/remote/session',
+    '//third-party/java/selenium',
+  ]
+)

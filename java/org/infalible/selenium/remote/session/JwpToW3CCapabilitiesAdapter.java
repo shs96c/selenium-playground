@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
+import org.openqa.selenium.Capabilities;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -18,7 +19,7 @@ import java.util.stream.Stream;
 /**
  * Presents a Json Wire Protocol Capability instance as a stream of W3C Capabilities for use with New Session
  */
-public class JwpToW3CCapabilitiesAdapter implements Function<Map<String, Object>, Stream<Map<String, Object>>> {
+public class JwpToW3CCapabilitiesAdapter implements Function<Capabilities,  Stream<Map<String, Object>>> {
 
   private final Set<CapabilitiesAdapter> adapters;
 
@@ -37,6 +38,12 @@ public class JwpToW3CCapabilitiesAdapter implements Function<Map<String, Object>
         .add(new SafariAdapter());
 
     this.adapters = builder.build();
+  }
+
+  @Override
+  public Stream<Map<String, Object>> apply(Capabilities capabilities) {
+    @SuppressWarnings("unchecked") Map<String, Object> map = (Map<String, Object>) capabilities.asMap();
+    return apply(map);
   }
 
   public Stream<Map<String,Object>> apply(Map<String, Object> caps) {
