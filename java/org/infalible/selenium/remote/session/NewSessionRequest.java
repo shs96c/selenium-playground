@@ -25,6 +25,7 @@ import java.io.PipedOutputStream;
 import java.io.Writer;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -71,21 +72,37 @@ public class NewSessionRequest {
   public NewSessionRequest(W3CCapabilities caps) {
     this.source = Objects.requireNonNull(caps);
 
-    this.writeToStream = json -> {
-      json.beginObject();
+    this.writeToStream =
+        json -> {
+          json.beginObject();
 
-      caps.getMetadata().forEach((key, value) -> json.name(key).write(value, Json.OBJECT_TYPE));
-      json.name("capabilities").beginObject();
+          Map<String, ?> always = caps.getAlwaysMatch().asMap();
+          Iterator<Capabilities> firstIter = caps.getFirstMatches().iterator();
+          Map<String, ?> first = firstIter.next().asMap();
 
-      json.name("alwaysMatch").write(caps.getAlwaysMatch().asMap(), Json.MAP_TYPE);
+          caps.getMetadata().forEach((key, value) -> json.name(key).write(value, Json.OBJECT_TYPE));
+          json.name("capabilities").beginObject();
 
-      json.name("firstMatch").beginArray();
-      caps.getFirstMatches().forEach(cap -> json.write(cap.asMap(), Json.MAP_TYPE));
-      json.endArray();
+          json.name("alwaysMatch").write(always, Json.MAP_TYPE);
 
-      json.endObject();
-      json.endObject();
-    };
+          json.name("firstMatch").beginArray();
+          json.write(first, Json.MAP_TYPE);
+          while (firstIter.hasNext()) {
+            json.write(firstIter.next().asMap(), Json.MAP_TYPE);
+          }
+          json.endArray();
+
+          json.endObject();
+
+          json.name("desiredCapabilities").write(
+              ImmutableMap.builder()
+                  .putAll(always)
+                  .putAll(first)
+                  .build(),
+              Json.MAP_TYPE);
+
+          json.endObject();
+        };
   }
 
   public Result apply(HttpClient client) throws IOException {
@@ -175,11 +192,18 @@ public class NewSessionRequest {
         .merge(chrome)
         ;
 
-    HttpClient client = new JreHttpClient.Factory().createClient(new URL("http://localhost:4444/wd/hub"));
-    NewSessionRequest request = new NewSessionRequest(ImmutableMap.of(), caps);
+    W3CCapabilities w3cCaps = W3CCapabilities.newBuilder().addFirstMatches(firefox, chrome).build();
+
+    URL base = new URL("http://localhost:4444/wd/hub");
+
+    HttpClient client = new JreHttpClient.Factory().createClient(base);
+    NewSessionRequest request = new NewSessionRequest(w3cCaps);
     Result response = request.apply(client);
 
     System.out.println("response = " + response);
+
+    HttpRequest quit = new HttpRequest(HttpMethod.DELETE, "/session/" + response.getResponse().getSessionId());
+    client.execute(quit, true);
   }
 
 }
