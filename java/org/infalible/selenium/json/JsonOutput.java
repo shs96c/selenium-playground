@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
 
 public class JsonOutput implements Closeable {
@@ -21,38 +22,58 @@ public class JsonOutput implements Closeable {
     jsonWriter.close();
   }
 
-  public void write(JsonInput input, Type type) throws IOException {
+  public void write(JsonInput input, Type type) throws UncheckedIOException {
     Object read = input.read(type);
     gson.toJson(read, type, jsonWriter);
   }
 
-  public JsonOutput write(Object input, Type type) throws IOException {
+  public JsonOutput write(Object input, Type type) throws UncheckedIOException {
     gson.toJson(input, type, jsonWriter);
     return this;
   }
 
-  public JsonOutput beginObject() throws IOException {
-    jsonWriter.beginObject();
-    return this;
+  public JsonOutput beginObject() throws UncheckedIOException {
+    try {
+      jsonWriter.beginObject();
+      return this;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
-  public JsonOutput endObject() throws IOException {
-    jsonWriter.endObject();
-    return this;
+  public JsonOutput endObject() throws UncheckedIOException {
+    try {
+      jsonWriter.endObject();
+      return this;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
-  public JsonOutput name(String name) throws IOException {
-    jsonWriter.name(name);
-    return this;
+  public JsonOutput name(String name) throws UncheckedIOException {
+    try {
+      jsonWriter.name(name);
+      return this;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
-  public JsonOutput beginArray() throws IOException {
-    jsonWriter.beginArray();
-    return this;
+  public JsonOutput beginArray() throws UncheckedIOException {
+    try {
+      jsonWriter.beginArray();
+      return this;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
-  public JsonOutput endArray() throws IOException {
-    jsonWriter.endArray();
-    return this;
+  public JsonOutput endArray() throws UncheckedIOException {
+    try {
+      jsonWriter.endArray();
+      return this;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }

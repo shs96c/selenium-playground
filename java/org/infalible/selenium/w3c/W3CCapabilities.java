@@ -3,6 +3,7 @@ package org.infalible.selenium.w3c;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.ImmutableCapabilities;
 
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +22,18 @@ public class W3CCapabilities {
     this.metadata = metadata;
   }
 
+  public Capabilities getAlwaysMatch() {
+    return alwaysMatch;
+  }
+
+  public List<Capabilities> getFirstMatches() {
+    return firstMatches;
+  }
+
+  public Map<String, Object> getMetadata() {
+    return metadata;
+  }
+
   public static Builder newBuilder() {
     return new Builder();
   }
@@ -29,7 +42,7 @@ public class W3CCapabilities {
 
     private final ImmutableSortedMap.Builder<String, Object> metadata = ImmutableSortedMap.naturalOrder();
     private final ImmutableList.Builder<Capabilities> firstMatches = ImmutableList.builder();
-    private Capabilities alwaysMatch;
+    private Capabilities alwaysMatch = new ImmutableCapabilities();
 
     private Builder() {
       // We don't want users just creating one of these things.
@@ -68,7 +81,12 @@ public class W3CCapabilities {
     }
 
     public W3CCapabilities build() {
-      return new W3CCapabilities(alwaysMatch, firstMatches.build(), metadata.build());
+      ImmutableList<Capabilities> first = firstMatches.build();
+      if (first.isEmpty()) {
+        first = ImmutableList.of(new ImmutableCapabilities());
+      }
+
+      return new W3CCapabilities(alwaysMatch, first, metadata.build());
     }
   }
 

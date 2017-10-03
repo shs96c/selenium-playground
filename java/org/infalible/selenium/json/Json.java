@@ -12,6 +12,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.LinkedList;
@@ -62,12 +63,16 @@ public class Json {
     }
   }
 
-  public static JsonInput newInput(Reader from) throws IOException {
+  public static JsonInput newInput(Reader from) throws UncheckedIOException {
     return new JsonInput(GSON, GSON.newJsonReader(from));
   }
 
-  public static JsonOutput newOutput(Writer to) throws IOException {
-    return new JsonOutput(GSON, GSON.newJsonWriter(to));
+  public static JsonOutput newOutput(Writer to) throws UncheckedIOException {
+    try {
+      return new JsonOutput(GSON, GSON.newJsonWriter(to));
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   private static class MapAdapter extends TypeAdapter<Map<?, ?>> {

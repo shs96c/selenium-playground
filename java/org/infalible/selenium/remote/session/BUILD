@@ -4,6 +4,7 @@ java_library(
     deps = [
         "//java/org/infalible/function",
         "//java/org/infalible/selenium/json",
+        "//java/org/infalible/selenium/w3c",
         "//third-party/java/gson",
         "//third-party/java/guava",
         "//third-party/java/selenium",

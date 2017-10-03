@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import org.infalible.function.ThrowingConsumer;
 import org.infalible.selenium.json.Json;
 import org.infalible.selenium.json.JsonOutput;
+import org.infalible.selenium.w3c.W3CCapabilities;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.SessionNotCreatedException;
@@ -59,19 +60,32 @@ public class NewSessionRequest {
 
           new JwpToW3CCapabilitiesAdapter()
               .apply(caps)
-              .forEach(
-                  map -> {
-                    try {
-                      json.write(map, MAP_TYPE);
-                    } catch (IOException e) {
-                      throw new RuntimeException(e);
-                    }
-                  });
+              .forEach(map -> json.write(map, MAP_TYPE));
           json.endArray().endObject();
 
           // Close the payload object
           json.endObject();
         };
+  }
+
+  public NewSessionRequest(W3CCapabilities caps) {
+    this.source = Objects.requireNonNull(caps);
+
+    this.writeToStream = json -> {
+      json.beginObject();
+
+      caps.getMetadata().forEach((key, value) -> json.name(key).write(value, Json.OBJECT_TYPE));
+      json.name("capabilities").beginObject();
+
+      json.name("alwaysMatch").write(caps.getAlwaysMatch().asMap(), Json.MAP_TYPE);
+
+      json.name("firstMatch").beginArray();
+      caps.getFirstMatches().forEach(cap -> json.write(cap.asMap(), Json.MAP_TYPE));
+      json.endArray();
+
+      json.endObject();
+      json.endObject();
+    };
   }
 
   public Result apply(HttpClient client) throws IOException {

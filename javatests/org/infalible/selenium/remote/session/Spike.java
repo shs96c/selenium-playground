@@ -59,11 +59,7 @@ public class Spike {
               .apply(caps)
               .forEach(
                   map -> {
-                    try {
                       json.write(map, MAP_TYPE);
-                    } catch (IOException e) {
-                      throw new RuntimeException(e);
-                    }
                   });
 
           json.endArray().endObject().endObject();
