@@ -38,7 +38,7 @@ public class Json {
     try {
       return GSON.fromJson(string, MAP_TYPE);
     } catch (JsonParseException e) {
-      throw new JsonException(e);
+      throw new JsonException("Exception parsing: " + string, e);
     }
   };
 
