@@ -33,7 +33,13 @@ public class Json {
 
   public final static Function<Object, String> TO_JSON = GSON::toJson;
 
-  public final static Function<String, Map<String, Object>> TO_MAP = string -> GSON.fromJson(string, MAP_TYPE);
+  public final static Function<String, Map<String, Object>> TO_MAP = string -> {
+    try {
+      return GSON.fromJson(string, MAP_TYPE);
+    } catch (JsonParseException e) {
+      throw new JsonException(e);
+    }
+  };
 
   private static Object readValue(JsonReader in, Gson gson) throws IOException {
     switch (in.peek()) {
